@@ -1,0 +1,118 @@
+<%- include('partials/header', { title: 'Vessels', subtitle: 'Manage fleet of vessels', page: 'vessels' }) %>
+
+<% if(msg) { %>
+<div class="toast <%= msg==='error'?'toast-error':'toast-success' %>">
+  <%= msg==='added'?'✅ Vessel added successfully!':msg==='updated'?'✅ Vessel updated successfully!':msg==='deleted'?'🗑️ Vessel deleted!':'❌ Error: '+detail %>
+</div>
+<% } %>
+<div class="page-hero">
+  <h2>🚢 Vessel Fleet Management</h2>
+  <p>Track all vessels, their type, flag and crew count</p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-plus" style="color:var(--accent)"></i> Add New Vessel</h3>
+  </div>
+  <div class="card-body">
+    <form action="/vessels/add" method="POST">
+      <div class="form-grid">
+        <div class="form-group"><label>Vessel Name</label><input name="vessel_name" required placeholder="e.g. MV Ocean Star"></div>
+        <div class="form-group">
+          <label>Vessel Type</label>
+          <select name="vessel_type" required>
+            <option value="">-- Select Type --</option>
+            <option>Bulk Carrier</option><option>Container Ship</option>
+            <option>Tanker</option><option>Cargo Ship</option><option>Passenger Ship</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Flag Country</label><input name="flag_country" required placeholder="e.g. Panama"></div>
+        <div class="form-group"><label>Gross Tonnage</label><input type="number" name="gross_tonnage" required min="1" placeholder="e.g. 45000"></div>
+        <div class="form-group"><label>Built Year</label><input type="number" name="built_year" required min="1900" max="2024" placeholder="e.g. 2015"></div>
+      </div>
+      <div class="form-actions" style="margin-top:16px">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Vessel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-ship" style="color:var(--accent)"></i> Fleet Overview (<%= vessels.length %>)</h3>
+    <input type="text" placeholder="🔍 Search vessels..." onkeyup="filterTable(this,'vesselTable')" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px">
+  </div>
+  <div class="card-body" style="padding:0">
+    <div class="table-wrap">
+      <table id="vesselTable">
+        <thead>
+          <tr><th>#</th><th>Vessel Name</th><th>Type</th><th>Flag</th><th>Gross Tonnage</th><th>Crew</th><th>Total Payroll</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <% vessels.forEach(v => { %>
+          <tr>
+            <td><strong><%= v.vessel_id %></strong></td>
+            <td><strong>🚢 <%= v.vessel_name %></strong></td>
+            <td><span class="badge badge-info"><%= v.vessel_type %></span></td>
+            <td>🏳️ <%= v.flag_country %></td>
+            <td><%= Number(v.gross_tonnage).toLocaleString() %> GT</td>
+            <td><span class="badge badge-success"><%= v.total_crew || 0 %> crew</span></td>
+            <td><strong>$<%= v.total_salary_cost ? Number(v.total_salary_cost).toLocaleString() : '0' %></strong></td>
+            <td>
+              <% if(v.status==='Active') { %><span class="badge badge-success">Active</span>
+              <% } else if(v.status==='Under Repair') { %><span class="badge badge-warning">Under Repair</span>
+              <% } else { %><span class="badge badge-muted">Inactive</span><% } %>
+            </td>
+            <td>
+              <button class="btn btn-warning btn-sm" onclick="openVesselEdit(<%= JSON.stringify(v) %>)"><i class="fa-solid fa-pen"></i></button>
+              <form action="/vessels/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this vessel?')">
+                <input type="hidden" name="vessel_id" value="<%= v.vessel_id %>">
+                <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="vesselModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>✏️ Edit Vessel</h3>
+      <button class="modal-close" onclick="closeModal('vesselModal')">✕</button>
+    </div>
+    <form action="/vessels/update" method="POST">
+      <input type="hidden" name="vessel_id" id="v_id">
+      <div class="form-grid">
+        <div class="form-group"><label>Vessel Name</label><input name="vessel_name" id="v_name" required></div>
+        <div class="form-group">
+          <label>Type</label>
+          <select name="vessel_type" id="v_type">
+            <option>Bulk Carrier</option><option>Container Ship</option>
+            <option>Tanker</option><option>Cargo Ship</option><option>Passenger Ship</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Flag Country</label><input name="flag_country" id="v_flag" required></div>
+        <div class="form-group"><label>Gross Tonnage</label><input type="number" name="gross_tonnage" id="v_gt" required></div>
+        <div class="form-group">
+          <label>Status</label>
+          <select name="status" id="v_status">
+            <option value="Active">Active</option>
+            <option value="Under Repair">Under Repair</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions" style="margin-top:16px">
+        <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('vesselModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

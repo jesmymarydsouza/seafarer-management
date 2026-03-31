@@ -1,0 +1,116 @@
+<%- include('partials/header', { title: 'Contracts', subtitle: 'Manage seafarer deployment contracts', page: 'contracts' }) %>
+
+<% if(msg) { %>
+<div class="toast <%= msg==='error'?'toast-error':'toast-success' %>">
+  <%= msg==='added'?'✅ Contract created successfully!':msg==='updated'?'✅ Contract updated successfully!':msg==='deleted'?'🗑️ Contract deleted!':'❌ Error: '+detail %>
+</div>
+<% } %>
+<div class="page-hero">
+  <h2>📋 Contract Management</h2>
+  <p>Assign seafarers to vessels and manage contract lifecycle</p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-plus" style="color:var(--accent)"></i> Create New Contract</h3>
+  </div>
+  <div class="card-body">
+    <form action="/contracts/add" method="POST">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Seafarer</label>
+          <select name="seafarer_id" required>
+            <option value="">-- Select Seafarer --</option>
+            <% seafarers.forEach(s => { %><option value="<%= s.seafarer_id %>"><%= s.full_name %></option><% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Vessel</label>
+          <select name="vessel_id" required>
+            <option value="">-- Select Vessel --</option>
+            <% vessels.forEach(v => { %><option value="<%= v.vessel_id %>"><%= v.vessel_name %></option><% }) %>
+          </select>
+        </div>
+        <div class="form-group"><label>Start Date</label><input type="date" name="start_date" required></div>
+        <div class="form-group"><label>End Date</label><input type="date" name="end_date" required></div>
+        <div class="form-group"><label>Monthly Salary ($)</label><input type="number" name="monthly_salary" required min="1" step="0.01" placeholder="e.g. 5000"></div>
+      </div>
+      <div class="form-actions" style="margin-top:16px">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create Contract</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-file-contract" style="color:var(--accent)"></i> All Contracts (<%= contracts.length %>)</h3>
+    <input type="text" placeholder="🔍 Search..." onkeyup="filterTable(this,'contractTable')" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px">
+  </div>
+  <div class="card-body" style="padding:0">
+    <div class="table-wrap">
+      <table id="contractTable">
+        <thead>
+          <tr><th>#</th><th>Seafarer</th><th>Vessel</th><th>Rank</th><th>Start</th><th>End</th><th>Salary/mo</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <% contracts.forEach(c => { %>
+          <tr>
+            <td><strong><%= c.contract_id %></strong></td>
+            <td><strong><%= c.full_name %></strong></td>
+            <td>🚢 <%= c.vessel_name %></td>
+            <td><span class="badge badge-info"><%= c.rank_name %></span></td>
+            <td><%= new Date(c.start_date).toLocaleDateString() %></td>
+            <td><%= new Date(c.end_date).toLocaleDateString() %></td>
+            <td><strong>$<%= Number(c.monthly_salary).toLocaleString() %></strong></td>
+            <td>
+              <% if(c.contract_status==='Active') { %><span class="badge badge-success">Active</span>
+              <% } else if(c.contract_status==='Completed') { %><span class="badge badge-info">Completed</span>
+              <% } else { %><span class="badge badge-danger">Terminated</span><% } %>
+            </td>
+            <td>
+              <button class="btn btn-warning btn-sm" onclick="openContractEdit(<%= JSON.stringify(c) %>)"><i class="fa-solid fa-pen"></i></button>
+              <form action="/contracts/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this contract?')">
+                <input type="hidden" name="contract_id" value="<%= c.contract_id %>">
+                <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="contractModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>✏️ Edit Contract</h3>
+      <button class="modal-close" onclick="closeModal('contractModal')">✕</button>
+    </div>
+    <form action="/contracts/update" method="POST">
+      <input type="hidden" name="contract_id" id="c_id">
+      <div class="form-grid">
+        <div class="form-group"><label>Start Date</label><input type="date" name="start_date" id="c_start" required></div>
+        <div class="form-group"><label>End Date</label><input type="date" name="end_date" id="c_end" required></div>
+        <div class="form-group"><label>Monthly Salary ($)</label><input type="number" name="monthly_salary" id="c_salary" required></div>
+        <div class="form-group">
+          <label>Status</label>
+          <select name="contract_status" id="c_status">
+            <option value="Active">Active</option>
+            <option value="Completed">Completed</option>
+            <option value="Terminated">Terminated</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions" style="margin-top:16px">
+        <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+        <button type="button" class="btn btn-outline" onclick="closeModal('contractModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

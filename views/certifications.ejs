@@ -1,0 +1,94 @@
+<%- include('partials/header', { title: 'Certifications', subtitle: 'Track seafarer certificates and expiry', page: 'certs' }) %>
+
+<% if(msg) { %>
+<div class="toast <%= msg==='error'?'toast-error':'toast-success' %>">
+  <%= msg==='added'?'✅ Certificate added successfully!':msg==='deleted'?'🗑️ Certificate deleted!':'❌ Error: '+detail %>
+</div>
+<% } %>
+<div class="page-hero">
+  <h2>🏅 Certification Tracker</h2>
+  <p>Monitor STCW and other maritime certifications with expiry alerts</p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-plus" style="color:var(--accent)"></i> Add Certification</h3>
+  </div>
+  <div class="card-body">
+    <form action="/certs/add" method="POST">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Seafarer</label>
+          <select name="seafarer_id" required>
+            <option value="">-- Select Seafarer --</option>
+            <% seafarers.forEach(s => { %><option value="<%= s.seafarer_id %>"><%= s.full_name %></option><% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Certificate Name</label>
+          <select name="cert_name" required>
+            <option value="">-- Select Certificate --</option>
+            <option>STCW Basic Safety</option>
+            <option>Officer of the Watch</option>
+            <option>Chief Engineer License</option>
+            <option>Master Mariner License</option>
+            <option>Engine Room Safety</option>
+            <option>Electrical Safety</option>
+            <option>Food Safety Certificate</option>
+            <option>Medical First Aid</option>
+            <option>Crowd Management</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Issued Date</label><input type="date" name="issued_date" required></div>
+        <div class="form-group"><label>Expiry Date</label><input type="date" name="expiry_date" required></div>
+        <div class="form-group"><label>Issuing Authority</label><input name="issuing_authority" placeholder="e.g. MARINA Philippines"></div>
+      </div>
+      <div class="form-actions" style="margin-top:16px">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Certificate</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-certificate" style="color:var(--accent)"></i> Certification Status View (<%= certs.length %>)</h3>
+    <input type="text" placeholder="🔍 Search..." onkeyup="filterTable(this,'certTable')" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px">
+  </div>
+  <div class="card-body" style="padding:0">
+    <div class="table-wrap">
+      <table id="certTable">
+        <thead>
+          <tr><th>Seafarer</th><th>Rank</th><th>Certificate</th><th>Issued</th><th>Expiry</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <% certs.forEach(c => { %>
+          <tr>
+            <td><strong><%= c.full_name %></strong></td>
+            <td><%= c.rank_name %></td>
+            <td>🏅 <%= c.cert_name %></td>
+            <td><%= new Date(c.issued_date).toLocaleDateString() %></td>
+            <td><%= new Date(c.expiry_date).toLocaleDateString() %></td>
+            <td>
+              <% if(c.cert_status==='Valid') { %><span class="badge badge-success">✅ Valid</span>
+              <% } else if(c.cert_status==='Expiring Soon') { %><span class="badge badge-warning">⚠️ Expiring Soon</span>
+              <% } else { %><span class="badge badge-danger">❌ Expired</span><% } %>
+            </td>
+            <td>
+              <% const fc = fullCerts.find(x => x.full_name === c.full_name && x.cert_name === c.cert_name); %>
+              <% if(fc) { %>
+              <form action="/certs/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this certificate?')">
+                <input type="hidden" name="cert_id" value="<%= fc.cert_id %>">
+                <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i></button>
+              </form>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

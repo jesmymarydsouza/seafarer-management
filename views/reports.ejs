@@ -1,0 +1,128 @@
+<%- include('partials/header', { title: 'Reports & Analytics', subtitle: 'Aggregate reports using JOINs and views', page: 'reports' }) %>
+
+<div class="page-hero">
+  <h2>📊 Reports & Analytics</h2>
+  <p>Summarized insights using aggregate functions, JOINs and database views</p>
+</div>
+
+<!-- Contract Summary -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-chart-pie" style="color:var(--accent)"></i> Contract Summary (GROUP BY + COUNT + SUM)</h3>
+  </div>
+  <div class="card-body">
+    <div class="stats-grid">
+      <% contractReport.forEach(r => { %>
+      <div class="stat-card">
+        <div class="stat-icon <%= r.contract_status==='Active'?'teal':r.contract_status==='Completed'?'blue':'rose' %>">
+          <%= r.contract_status==='Active'?'✅':r.contract_status==='Completed'?'📁':'❌' %>
+        </div>
+        <div class="stat-info">
+          <h3><%= r.count %></h3>
+          <p><%= r.contract_status %> Contracts</p>
+          <small style="color:var(--muted)">Total: $<%= Number(r.total_salary).toLocaleString() %></small>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<!-- Rank Report -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-users" style="color:var(--accent)"></i> Seafarers by Rank (JOIN + AVG + MAX + MIN)</h3>
+  </div>
+  <div class="card-body" style="padding:0">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Rank</th><th>Department</th><th>Total Seafarers</th><th>Avg Salary</th><th>Max Salary</th><th>Min Salary</th></tr>
+        </thead>
+        <tbody>
+          <% rankReport.forEach(r => { %>
+          <tr>
+            <td><strong><%= r.rank_name %></strong></td>
+            <td><span class="badge badge-info"><%= r.department %></span></td>
+            <td><span class="badge badge-success"><%= r.total %></span></td>
+            <td>$<%= r.avg_salary ? Number(r.avg_salary).toFixed(0) : '—' %></td>
+            <td style="color:var(--success)"><strong>$<%= r.max_salary ? Number(r.max_salary).toLocaleString() : '—' %></strong></td>
+            <td style="color:var(--danger)">$<%= r.min_salary ? Number(r.min_salary).toLocaleString() : '—' %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Vessel Payroll Report -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-ship" style="color:var(--accent)"></i> Vessel Crew & Payroll (JOIN + COUNT + SUM)</h3>
+  </div>
+  <div class="card-body" style="padding:0">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Vessel</th><th>Type</th><th>Flag</th><th>Active Crew</th><th>Total Payroll/mo</th></tr>
+        </thead>
+        <tbody>
+          <% vesselReport.forEach(v => { %>
+          <tr>
+            <td><strong>🚢 <%= v.vessel_name %></strong></td>
+            <td><span class="badge badge-info"><%= v.vessel_type %></span></td>
+            <td><%= v.flag_country %></td>
+            <td><span class="badge badge-success"><%= v.crew_count %> crew</span></td>
+            <td><strong style="color:var(--secondary)">$<%= v.total_payroll ? Number(v.total_payroll).toLocaleString() : '0' %></strong></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Nationality Report -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-globe" style="color:var(--accent)"></i> Top Nationalities (GROUP BY + COUNT)</h3>
+  </div>
+  <div class="card-body">
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <% nationalityReport.forEach((n,i) => { %>
+      <div style="background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;padding:12px 20px;border-radius:12px;text-align:center;min-width:120px">
+        <div style="font-size:22px;font-weight:700"><%= n.count %></div>
+        <div style="font-size:12px;opacity:.8"><%= n.nationality %></div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<!-- Audit Log -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--accent)"></i> Trigger Audit Log (Last 20 Actions)</h3>
+  </div>
+  <div class="card-body">
+    <% if(auditLog.length === 0) { %>
+      <p style="color:var(--muted);text-align:center;padding:20px">No audit entries yet. Add/update contracts to see trigger logs.</p>
+    <% } else { %>
+      <% auditLog.forEach(log => { %>
+      <div class="audit-item">
+        <div class="audit-dot <%= log.action_type %>"></div>
+        <div class="audit-text">
+          <p>
+            <span class="badge <%= log.action_type==='INSERT'?'badge-success':log.action_type==='UPDATE'?'badge-warning':'badge-danger' %>"><%= log.action_type %></span>
+            &nbsp;<strong><%= log.table_name %></strong> — <%= log.description %>
+          </p>
+          <span><%= new Date(log.action_time).toLocaleString() %></span>
+        </div>
+      </div>
+      <% }) %>
+    <% } %>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
